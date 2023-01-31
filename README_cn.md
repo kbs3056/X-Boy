@@ -1,113 +1,108 @@
-# Open source game handheld based on Allwinner V3s
+**基于全志V3s自制GBA开源游戏掌机**
 
-Original text by hsinyuwang  
-Translation and editing by vamastah
+视频介绍 [https://www.bilibili.com/video/BV1JP4y1X7Uz](https://www.bilibili.com/video/BV1JP4y1X7Uz/?vd_source=2f25de86752ccc9cfafc4bcf1c352db1)
 
-Video presentation (Chinese) [https://www.bilibili.com/video/BV1JP4y1X7Uz](https://www.bilibili.com/video/BV1JP4y1X7Uz/?vd_source=2f25de86752ccc9cfafc4bcf1c352db1)
-
-Pictures
+图片展示
 
 ![](/images/7.jpg)
 
 ![](/images/6.jpg)
 
-Below you can find instructions on how to build a binary image of firmware to be written to an SD card. You can also use the image created by hsinyuwang:
+以下内容为镜像的构建过程，你也可以直接使用我制作好的镜像
 
-> Baidu storage
+> 百度网盘
 > 
-> Link: https://pan.baidu.com/s/1ftacGCXHLy-AFabczBg3yg
+> 链接：https://pan.baidu.com/s/1ftacGCXHLy-AFabczBg3yg
 >
-> Extraction code: 9bp8
+> 提取码：9bp8
 
-I could not manage to download the image from the link above, so I (vamastah) created another one from scratch and published in Releases section of this repository. It was not tested yet, so if you happen to have any issues, please inform me.
+**X-Boy 系统镜像构建全流程指南**
 
-**Guide on firmware image construction for X-Boy**
-
-- [Ubuntu installation](#ubuntu-installation)
-	- [Download mirror](#download-mirror)
-	- [Change APT package source](#change-apt-package-source)
-		- [backup the source list](#backup-the-source-list)
-		- [modify sources.list](#modify-sourceslist)
-		- [change to Tsinghua mirror source](#change-to-tsinghua-mirror-source)
-		- [update and upgrade packages](#update-and-upgrade-packages)
-		- [install dependencies](#install-dependencies)
-- [Installation of the cross-compilation toolchain](#installation-of-the-cross-compilation-toolchain)
-	- [Install the compiler](#install-the-compiler)
-		- [create a folder](#create-a-folder)
-		- [download the precompiled toolchain](#download-the-precompiled-toolchain)
-		- [untar the toolchain](#untar-the-toolchain)
-		- [configure environment variables](#configure-environment-variables)
-		- [install dependencies](#install-dependencies)
-		- [verify the installation](#verify-the-installation)
-- [U-Boot compilation](#uboot-编译)
-	- [download U-Boot](#获取-uboot)
-	- [modify include/configs/sun8i.h](#修改-includeconfigssun8ih)
-	- [compile U-Boot](#编译-uboot)
-- [Linux compilation](#主线-linux-编译)
-	- [download source code](#下载源码)
-	- [modify the top-level Makefile](#修改顶层-makefile)
-	- [configure ili9341 LCD](#配置-ili9341-lcd)
-	- [compile](#编译)
-- [Buildroot rootfs building](#buildroot-根文件系统构建)
-	- [get Buildroot](#获取-buildroot)
-	- [basic configuration](#基本配置)
-	- [toolchain configuration](#编译链工具配置)
-	- [alsa, sdl, fbv configuration](#alsasdlfbv配置)
-	- [build](#编译-1)
-- [SD card partitioning](#tf-卡分区及烧录)
-	- [partition the SD card](#tf-卡分区)
-	- [burn U-Boot](#烧录-uboot)
-	- [copy the kernel and the device tree](#写入内核和设备树)
-	- [untar rootfs](#写入根文件系统)
-- [Emulator compilation](#编译模拟器)
-	- [compile gpsp](#编译-gpsp)
-	- [copy the executable](#复制可执行文件)
-- [System configuration](#系统配置)
-	- [automount fat partition](#自动挂载-fat-分区)
-	- [configure terminal display](#配置双端显示)
-	- [turn on the sound after startup](#启动后开启声音)
-	- [configure SDL environment](#配置-sdl-环境)
-	- [autostart the emulator](#自启动模拟器)
-- [Image mirroring](#制作镜像)
-	- [create a working directory](#创建工作目录)
-	- [create a blank file and partition it](#创建空白文件并分区)
-	- [map the image into block devices](#将镜像文件虚拟成块设备)
-	- [format the block devices and mount](#格式化块设备并且挂载)
-	- [burn U-Boot](#烧录-uboot-1)
-	- [copy the kernel and the device tree](#写入内核和设备树-1)
-	- [untar rootfs](#写入根文件系统-1)
-- [Acknowledgements](#acknowledgements)
-- [References](#references)
+- [ubuntu 系统安装](#ubuntu-系统安装)
+	- [下载镜像](#下载镜像)
+	- [换源](#换源)
+		- [备份源列表](#备份源列表)
+		- [修改 sources.list 文件](#修改-sourceslist-文件)
+		- [更改为清华镜像源](#更改为清华镜像源)
+		- [更新并升级](#更新并升级)
+		- [安装依赖库](#安装依赖库)
+- [安装交叉编译工具链](#安装交叉编译工具链)
+	- [安装编译器](#安装编译器)
+		- [新建 tool 文件夹并进入](#新建-tool-文件夹并进入)
+		- [下载交叉编译链](#下载交叉编译链)
+		- [创建文件夹并解压](#创建文件夹并解压)
+		- [配置环境变量](#配置环境变量)
+		- [安装其他库](#安装其他库)
+		- [验证是否安装成功](#验证是否安装成功)
+- [uboot 编译](#uboot-编译)
+	- [获取 uboot](#获取-uboot)
+	- [修改 include/configs/sun8i.h](#修改-includeconfigssun8ih)
+	- [编译 uboot](#编译-uboot)
+- [主线 Linux 编译](#主线-linux-编译)
+	- [下载源码](#下载源码)
+	- [修改顶层 Makefile](#修改顶层-makefile)
+	- [配置 ili9341 LCD](#配置-ili9341-lcd)
+	- [编译](#编译)
+- [Buildroot 根文件系统构建](#buildroot-根文件系统构建)
+	- [获取 Buildroot](#获取-buildroot)
+	- [基本配置](#基本配置)
+	- [编译链工具配置](#编译链工具配置)
+	- [alsa、sdl、fbv配置](#alsasdlfbv配置)
+	- [编译](#编译-1)
+- [TF 卡分区及烧录](#tf-卡分区及烧录)
+	- [TF 卡分区](#tf-卡分区)
+	- [烧录 uboot](#烧录-uboot)
+	- [写入内核和设备树](#写入内核和设备树)
+	- [写入根文件系统](#写入根文件系统)
+- [编译模拟器](#编译模拟器)
+	- [编译 gpsp](#编译-gpsp)
+	- [复制可执行文件](#复制可执行文件)
+- [系统配置](#系统配置)
+	- [自动挂载 fat 分区](#自动挂载-fat-分区)
+	- [配置双端显示](#配置双端显示)
+	- [启动后开启声音](#启动后开启声音)
+	- [配置 SDL 环境](#配置-sdl-环境)
+	- [自启动模拟器](#自启动模拟器)
+- [制作镜像](#制作镜像)
+	- [创建工作目录](#创建工作目录)
+	- [创建空白文件并分区](#创建空白文件并分区)
+	- [将镜像文件虚拟成块设备](#将镜像文件虚拟成块设备)
+	- [格式化块设备并且挂载](#格式化块设备并且挂载)
+	- [烧录 uboot](#烧录-uboot-1)
+	- [写入内核和设备树](#写入内核和设备树-1)
+	- [写入根文件系统](#写入根文件系统-1)
+- [感谢](#感谢)
+- [参考链接](#参考链接)
 
 ---
 
-## Ubuntu installation
+## ubuntu 系统安装
 
-### Download mirror
+### 下载镜像
 
 ```
 https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/18.04/ubuntu-18.04.6-desktop-amd64.iso
 ```
 
-You can install it on a physical machine or on a VM. I suggest using VirtualBox as it offers an unattended installation feature - really convenient!
+使用物理机或者虚拟机安装都可以
 
-### Change APT package source
+### 换源
 
-#### backup the source list
+#### 备份源列表
 
 ```
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
 ```
-#### modify sources.list
+#### 修改 sources.list 文件
 
 ```
 sudo gedit /etc/apt/sources.list
 ```
 
-#### change to Tsinghua mirror source
+#### 更改为清华镜像源
 
 ```
-# repositories with sources are commented out to improve the speed of apt update, uncomment if necessary
+# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse
@@ -116,64 +111,59 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricte
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
-# pre-release software repository, not recommended
+# 预发布软件源，不建议启用
 # deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
 ```
 
-#### update and upgrade packages
+#### 更新并升级
 
 ```
 sudo apt-get update && sudo apt-get upgrade
 ```
 
-#### install dependencies
+#### 安装依赖库
 
 ```
 sudo apt-get install -y device-tree-compiler python flex bison ncurses-dev libssl-dev
 ```
 
-## Installation of the cross-compilation toolchain
+## 安装交叉编译工具链
 
-### Install the compiler
+### 安装编译器
 
-#### create a folder
+#### 新建 tool 文件夹并进入
 
 ```
-mkdir -p ~/linux/tools && cd ~/linux/tools
+mkdir ~/linux/tools && cd ~/linux/tools
 ```
 
-#### download the precompiled toolchain
+#### 下载交叉编译链
 
 ```
 wget https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabihf/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz
 ```
 
-#### untar the toolchain
+#### 创建文件夹并解压
 
 ```
 sudo mkdir /usr/local/arm && sudo tar -vxf gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz -C /usr/local/arm
 ```
 
-#### configure environment variables
+#### 配置环境变量
 
 ```
-# run a text editor as root
 sudo vim ~/.bashrc
-
-# write the line below in the file
 export PATH=$PATH:/usr/local/arm/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin
-
-# execute in the terminal
 source ~/.bashrc
 ```
-#### install dependencies
+#### 安装其他库
 
 ```
 sudo apt-get install lsb-core lib32stdc++6
 ```
 
-#### verify the installation
+#### 验证是否安装成功
 
 ```
 arm-linux-gnueabihf-gcc -v
@@ -871,13 +861,13 @@ sudo cp ~/v3s/linux/arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dtb ~/img/ker
 sudo tar xvf ~/v3s/buildroot-2019.08/output/images/rootfs.tar -C ~/img/rootfs
 ```
 
-## Acknowledgements
+## 感谢
 
 [steward-fu](https://github.com/steward-fu)
 
 [STM32-X360-xinput](https://github.com/nesvera/STM32-X360-xinput)
 
-## References
+## 参考链接
 
 [全志V3S（荔枝派zero）学习笔记](https://blog.csdn.net/p1279030826/article/details/114981681)
 

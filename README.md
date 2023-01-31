@@ -1,108 +1,113 @@
-**基于全志V3s自制GBA开源游戏掌机**
+# Open source game handheld based on Allwinner V3s
 
-视频介绍 [https://www.bilibili.com/video/BV1JP4y1X7Uz](https://www.bilibili.com/video/BV1JP4y1X7Uz/?vd_source=2f25de86752ccc9cfafc4bcf1c352db1)
+Original text by hsinyuwang  
+Translation and editing by vamastah
 
-图片展示
+Video presentation (Chinese) [https://www.bilibili.com/video/BV1JP4y1X7Uz](https://www.bilibili.com/video/BV1JP4y1X7Uz/?vd_source=2f25de86752ccc9cfafc4bcf1c352db1)
+
+Pictures
 
 ![](/images/7.jpg)
 
 ![](/images/6.jpg)
 
-以下内容为镜像的构建过程，你也可以直接使用我制作好的镜像
+Below you can find instructions on how to build a binary image of firmware to be written to an SD card. You can also use the image created by hsinyuwang:
 
-> 百度网盘
+> Baidu storage
 > 
-> 链接：https://pan.baidu.com/s/1ftacGCXHLy-AFabczBg3yg
+> Link: https://pan.baidu.com/s/1ftacGCXHLy-AFabczBg3yg
 >
-> 提取码：9bp8
+> Extraction code: 9bp8
 
-**X-Boy 系统镜像构建全流程指南**
+I could not manage to download the image from the link above, so I (vamastah) created another one from scratch and published in Releases section of this repository. It was not tested yet, so if you happen to have any issues, please inform me.
 
-- [ubuntu 系统安装](#ubuntu-系统安装)
-	- [下载镜像](#下载镜像)
-	- [换源](#换源)
-		- [备份源列表](#备份源列表)
-		- [修改 sources.list 文件](#修改-sourceslist-文件)
-		- [更改为清华镜像源](#更改为清华镜像源)
-		- [更新并升级](#更新并升级)
-		- [安装依赖库](#安装依赖库)
-- [安装交叉编译工具链](#安装交叉编译工具链)
-	- [安装编译器](#安装编译器)
-		- [新建 tool 文件夹并进入](#新建-tool-文件夹并进入)
-		- [下载交叉编译链](#下载交叉编译链)
-		- [创建文件夹并解压](#创建文件夹并解压)
-		- [配置环境变量](#配置环境变量)
-		- [安装其他库](#安装其他库)
-		- [验证是否安装成功](#验证是否安装成功)
-- [uboot 编译](#uboot-编译)
-	- [获取 uboot](#获取-uboot)
-	- [修改 include/configs/sun8i.h](#修改-includeconfigssun8ih)
-	- [编译 uboot](#编译-uboot)
-- [主线 Linux 编译](#主线-linux-编译)
-	- [下载源码](#下载源码)
-	- [修改顶层 Makefile](#修改顶层-makefile)
-	- [配置 ili9341 LCD](#配置-ili9341-lcd)
-	- [编译](#编译)
-- [Buildroot 根文件系统构建](#buildroot-根文件系统构建)
-	- [获取 Buildroot](#获取-buildroot)
-	- [基本配置](#基本配置)
-	- [编译链工具配置](#编译链工具配置)
-	- [alsa、sdl、fbv配置](#alsasdlfbv配置)
-	- [编译](#编译-1)
-- [TF 卡分区及烧录](#tf-卡分区及烧录)
-	- [TF 卡分区](#tf-卡分区)
-	- [烧录 uboot](#烧录-uboot)
-	- [写入内核和设备树](#写入内核和设备树)
-	- [写入根文件系统](#写入根文件系统)
-- [编译模拟器](#编译模拟器)
-	- [编译 gpsp](#编译-gpsp)
-	- [复制可执行文件](#复制可执行文件)
-- [系统配置](#系统配置)
-	- [自动挂载 fat 分区](#自动挂载-fat-分区)
-	- [配置双端显示](#配置双端显示)
-	- [启动后开启声音](#启动后开启声音)
-	- [配置 SDL 环境](#配置-sdl-环境)
-	- [自启动模拟器](#自启动模拟器)
-- [制作镜像](#制作镜像)
-	- [创建工作目录](#创建工作目录)
-	- [创建空白文件并分区](#创建空白文件并分区)
-	- [将镜像文件虚拟成块设备](#将镜像文件虚拟成块设备)
-	- [格式化块设备并且挂载](#格式化块设备并且挂载)
-	- [烧录 uboot](#烧录-uboot-1)
-	- [写入内核和设备树](#写入内核和设备树-1)
-	- [写入根文件系统](#写入根文件系统-1)
-- [感谢](#感谢)
-- [参考链接](#参考链接)
+**Guide on firmware image construction for X-Boy**
+
+- [Ubuntu installation](#ubuntu-installation)
+	- [Download mirror](#download-mirror)
+	- [Change APT package source](#change-apt-package-source)
+		- [backup the source list](#backup-the-source-list)
+		- [modify sources.list](#modify-sourceslist)
+		- [change to Tsinghua mirror source](#change-to-tsinghua-mirror-source)
+		- [update and upgrade packages](#update-and-upgrade-packages)
+		- [install dependencies](#install-dependencies)
+- [Installation of the cross-compilation toolchain](#installation-of-the-cross-compilation-toolchain)
+	- [Install the compiler](#install-the-compiler)
+		- [create a folder](#create-a-folder)
+		- [download the precompiled toolchain](#download-the-precompiled-toolchain)
+		- [untar the toolchain](#untar-the-toolchain)
+		- [configure environment variables](#configure-environment-variables)
+		- [install toolchain dependencies](#install-toolchain-dependencies)
+		- [verify the installation](#verify-the-installation)
+- [U-Boot compilation](#u-boot-compilation)
+	- [download U-Boot](#download-u-boot)
+	- [modify include/configs/sun8i.h](#modify-includeconfigssun8ih)
+	- [compile U-Boot](#compile-uboot)
+- [Linux compilation](#linux-compilation)
+	- [download source code](#download-source-code)
+	- [modify the top-level Makefile](#modify-the-top-level-makefile)
+	- [configure ILI9341 LCD](#configure-ili9341-lcd)
+	- [compile](#compile)
+- [Buildroot rootfs building](#buildroot-根文件系统构建)
+	- [get Buildroot](#获取-buildroot)
+	- [basic configuration](#基本配置)
+	- [toolchain configuration](#编译链工具配置)
+	- [alsa, sdl, fbv configuration](#alsasdlfbv配置)
+	- [build](#编译-1)
+- [SD card partitioning](#tf-卡分区及烧录)
+	- [partition the SD card](#tf-卡分区)
+	- [burn U-Boot](#烧录-uboot)
+	- [copy the kernel and the device tree](#写入内核和设备树)
+	- [untar rootfs](#写入根文件系统)
+- [Emulator compilation](#编译模拟器)
+	- [compile gpSP](#编译-gpsp)
+	- [copy the executable](#复制可执行文件)
+- [System configuration](#系统配置)
+	- [automount fat partition](#自动挂载-fat-分区)
+	- [configure terminal display](#配置双端显示)
+	- [turn on the sound after startup](#启动后开启声音)
+	- [configure SDL environment](#配置-sdl-环境)
+	- [autostart the emulator](#自启动模拟器)
+- [Image mirroring](#制作镜像)
+	- [create a working directory](#创建工作目录)
+	- [create a blank file and partition it](#创建空白文件并分区)
+	- [map the image into block devices](#将镜像文件虚拟成块设备)
+	- [format the block devices and mount](#格式化块设备并且挂载)
+	- [burn U-Boot](#烧录-uboot-1)
+	- [copy the kernel and the device tree](#写入内核和设备树-1)
+	- [untar rootfs](#写入根文件系统-1)
+- [Acknowledgements](#acknowledgements)
+- [References](#references)
 
 ---
 
-## ubuntu 系统安装
+## Ubuntu installation
 
-### 下载镜像
+### Download mirror
 
 ```
 https://mirrors.tuna.tsinghua.edu.cn/ubuntu-releases/18.04/ubuntu-18.04.6-desktop-amd64.iso
 ```
 
-使用物理机或者虚拟机安装都可以
+You can install it on a physical machine or on a VM. I suggest using VirtualBox as it offers an unattended installation feature - really convenient!
 
-### 换源
+### Change APT package source
 
-#### 备份源列表
+#### backup the source list
 
 ```
 sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak
 ```
-#### 修改 sources.list 文件
+#### modify sources.list
 
 ```
 sudo gedit /etc/apt/sources.list
 ```
 
-#### 更改为清华镜像源
+#### change to Tsinghua mirror source
 
 ```
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
+# repositories with sources are commented out to improve the speed of apt update, uncomment if necessary
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse
@@ -111,59 +116,64 @@ deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricte
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse
 deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse
-# 预发布软件源，不建议启用
+# pre-release software repository, not recommended
 # deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
 # deb-src https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-proposed main restricted universe multiverse
 ```
 
-#### 更新并升级
+#### update and upgrade packages
 
 ```
 sudo apt-get update && sudo apt-get upgrade
 ```
 
-#### 安装依赖库
+#### install dependencies
 
 ```
 sudo apt-get install -y device-tree-compiler python flex bison ncurses-dev libssl-dev
 ```
 
-## 安装交叉编译工具链
+## Installation of the cross-compilation toolchain
 
-### 安装编译器
+### Install the compiler
 
-#### 新建 tool 文件夹并进入
+#### create a folder
 
 ```
-mkdir ~/linux/tools && cd ~/linux/tools
+mkdir -p ~/linux/tools && cd ~/linux/tools
 ```
 
-#### 下载交叉编译链
+#### download the precompiled toolchain
 
 ```
 wget https://releases.linaro.org/components/toolchain/binaries/4.9-2017.01/arm-linux-gnueabihf/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz
 ```
 
-#### 创建文件夹并解压
+#### untar the toolchain
 
 ```
 sudo mkdir /usr/local/arm && sudo tar -vxf gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf.tar.xz -C /usr/local/arm
 ```
 
-#### 配置环境变量
+#### configure environment variables
 
 ```
+# run a text editor as root
 sudo vim ~/.bashrc
+
+# write the line below in the file
 export PATH=$PATH:/usr/local/arm/gcc-linaro-4.9.4-2017.01-x86_64_arm-linux-gnueabihf/bin
+
+# execute in the terminal
 source ~/.bashrc
 ```
-#### 安装其他库
+#### install toolchain dependencies
 
 ```
 sudo apt-get install lsb-core lib32stdc++6
 ```
 
-#### 验证是否安装成功
+#### verify the installation
 
 ```
 arm-linux-gnueabihf-gcc -v
@@ -171,47 +181,47 @@ arm-linux-gnueabihf-gcc -v
 
 ![](/images/1.jpg)
 
-## uboot 编译
+## U-boot compilation
 
-### 获取 uboot
+### download uboot
 
 ```
 mkdir ~/v3s && cd ~/v3s
 git clone https://github.com/Lichee-Pi/u-boot.git -b v3s-current
 ```
-uboot 的目录结构
+Directory structure of U-Boot
 
 ```
-├── api                存放uboot提供的API接口函数
-├── arch               平台相关的部分我们只需要关心这个目录下的ARM文件夹
+├── api                the interface of the functions provided by U-Boot
+├── arch               platform-related parts, we only care about the 'arm' subfolder
 │   ├──arm
 │   │   └──cpu
 │   │   │   └──armv7
 │   │   └──dts
-│   │   │   └──*.dts 存放设备的dts,也就是设备配置相关的引脚信息
-├── board              对于不同的平台的开发板对应的代码
-├── cmd                顾名思义，大部分的命令的实现都在这个文件夹下面。
-├── common             公共的代码
-├── configs            各个板子的对应的配置文件都在里面，我们的Lichee配置也在里面
-├── disk               对磁盘的一些操作都在这个文件夹里面，例如分区等。
-├── doc                参考文档，这里面有很多跟平台等相关的使用文档。
-├── drivers            各式各样的驱动文件都在这里面
-├── dts                一种树形结构（device tree）这个应该是uboot新的语法
-├── examples           官方给出的一些样例程序
-├── fs                 文件系统，uboot会用到的一些文件系统
-├── include            头文件，所有的头文件都在这个文件夹下面
-├── lib                一些常用的库文件在这个文件夹下面
-├── Licenses           这个其实跟编译无关了，就是一些license的声明
-├── net                网络相关的，需要用的小型网络协议栈
-├── post              上电自检程序
-├── scripts           编译脚本和Makefile文件
-├── spl               second program loader，即相当于二级uboot启动。
-├── test              小型的单元测试程序。
-└── tools             里面有很多uboot常用的工具。
+│   │   │   └──*.dts   device tree source, e.g. pin information of the device
+├── board              source code specific for development boards
+├── cmd                implementation of U-Boot commands
+├── common             common code
+├── configs            configuration files for different devboards (including Lichee)
+├── disk               implementation of some disk operations such as partitioning
+├── doc                reference documentation, including platform-related documents
+├── drivers            source code of drivers
+├── dts                Kconfig and build scripts for device tree
+├── examples           official sample programs
+├── fs                 implementation of different file systems supported by U-Boot
+├── include            header files
+├── lib                commonly used libraries
+├── Licenses           licenses, legal documents
+├── net                network stack
+├── post               power-on self-test program
+├── scripts            compile scripts and makefiles
+├── spl                secondary program loader，the second stage of bootloader
+├── test               unit tests
+└── tools              tools commonly used by U-Boot
 ```
-### 修改 include/configs/sun8i.h
+### modify include/configs/sun8i.h
 
-在文件中添加
+In the file add:
 
 ```
 #define CONFIG_BOOTCOMMAND  "setenv bootm_boot_mode sec; " \
@@ -224,7 +234,7 @@ uboot 的目录结构
 
 ![](/images/2.jpg)
 
-### 编译 uboot
+### compile U-Boot
 
 ```
 cd u-boot
@@ -233,7 +243,7 @@ make ARCH=arm menuconfig
 time make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- 2>&1 | tee build.log
 ```
 
-在 uboot 顶层 Makefile 的 248 行，添加默认编译器，就可以直接用 make 编译了。
+If you add the default compiler in line 248 of the top-level Makefile, then you will be able to compile U-Boot by calling 'make' with no additional parameters.
 
 ```
 # set default to nothing for native builds
@@ -248,24 +258,24 @@ KCONFIG_CONFIG	?= .config
 export KCONFIG_CONFIG
 ```
 
-编译成功
+Compile successfully.
 
 ![](/images/3.jpg)
 
-后面编译好 kernel 和 rootfs 然后一起烧录
+The kernel and rootfs will be built in the later steps.
 
-## 主线 Linux 编译
+## Linux compilation
 
-### 下载源码
+### download source code
 
 ```
 cd ~/v3s
 git clone -b zero-5.2.y https://github.com/Lichee-Pi/linux.git
 ```
 
-### 修改顶层 Makefile
+### modify the top-level Makefile
 
-在内核根目录下的 Makefile 364 行修改默认编译器，可以直接用 make 编译
+If you add the default compiler in line 364 of the top-level Makefile, you will be able to compile Linux by calling 'make' with no additional parameters.
 
 ```
 # ARCH		?= $(SUBARCH)
@@ -273,7 +283,7 @@ ARCH		?= arm
 CROSS_COMPILE	?= arm-linux-gnueabihf-
 ```
 
-### 配置 ili9341 LCD
+### configure ILI9341 LCD
 
 ```
 cd linux
@@ -281,7 +291,7 @@ make licheepi_zero_defconfig
 make menuconfig
 ```
 
-勾选驱动
+Select the following drivers:
 
 ```
 Device Drivers  --->
@@ -297,9 +307,9 @@ Device Drivers  --->
                 <*>   Generic FB driver for TFT LCD displays
 ```
 
-修改设备树 arch/arm/boot/dts/sun8i-v3s-licheepi-zero.dts
+Modify the device tree arch/arm/boot/dts/sun8i-v3s-licheepi-zero.dts.
 
-在 chosen 中添加 /delete-node/ framebuffer@0; 删除原来的 simplefb 节点（ uboot 里有使能 fb 的操作，必须删除而不是 disable ）
+Add '/delete-node/ framebuffer@0' in the 'chosen' node. It removes the original simplefb node. The operation of enabling framebuffer in U-Boot needs to be deleted, not disabled. Example:
 
 ```
 chosen {
@@ -308,7 +318,7 @@ chosen {
 	};
 ```
 
-删除 &i2c0 节点
+Delete the &i2c0 node:
 
 ```
 &i2c0 {
@@ -321,9 +331,9 @@ chosen {
 };
 ```
 
-修改设备树 arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts
+Modify the device tree arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dts.
 
-删除 &lradc 和 &i2c0 （ lradc 用不到，gt911 占用引脚和屏幕的 spi 引脚有冲突，所以删掉）
+Delete &lradc and &i2c0 - lradc is not used, the pin occupied by gt911 conflicts with the spi pin of the screen, so delete it:
 
 ```
 &lradc {
@@ -373,7 +383,7 @@ chosen {
 };
 ```
 
-在最后添加
+Add at the end:
 
 ```
 &spi0 {
@@ -395,11 +405,11 @@ chosen {
 };
 ```
 
-这样启动时的信息会通过 ili9341 LCD 显示
+In this way the information at startup will be displayed on the ili9341 LCD screen.
 
-5.2 内核需要修改 drivers/staging/fbtft/fbtft_core.c 的 fbtft_request_one_gpio() 方法，否则开机 log 会报申请 gpio 失败
+The kernel 5.2 needs to be modified, otherwise the boot log will report that the application for gpio failed. Change fbtft_request_one_gpio() in drivers/staging/fbtft/fbtft_core.c according to the example below.
 
-注意需要在该文件引入下面头文件，否则编译报错
+Note that the following header file needs to be introduced in the file above, otherwise an error will be reported when compiling:
 
 ```
 #include <linux/of_gpio.h>
@@ -446,9 +456,7 @@ static int fbtft_request_one_gpio(struct fbtft_par *par,
 }
 ```
 
-修改引脚 bug
-
-fbtft_bus.c 的 fbtft_write_vmem16_bus8() 方法
+Fix the pin polarity bug in the function fbtft_write_vmem16_bus8() in the file fbtft_bus.c:
 
 ```
 int fbtft_write_vmem16_bus8(struct fbtft_par *par, size_t offset, size_t len)
@@ -470,7 +478,7 @@ int fbtft_write_vmem16_bus8(struct fbtft_par *par, size_t offset, size_t len)
  
 	if (par->gpio.dc)
 	{
-		//printk("dc拉高！\n");
+		//printk("dc goes up!\n");
 		gpiod_set_value(par->gpio.dc, 1);
 	}
 	/* non buffered write */
@@ -507,23 +515,23 @@ int fbtft_write_vmem16_bus8(struct fbtft_par *par, size_t offset, size_t len)
 }
 ```
 
-### 编译
+### compile
 
 ```
 make -j4
 make -j4 INSTALL_MOD_PATH=out modules
 make -j4 INSTALL_MOD_PATH=out modules_install
-# 修改了设备树文件后编译
+# compile after modifying the device tree
 make dtbs
 ```
 
-- 编译完成后，zImage 在 arch/arm/boot/ ，驱动模块在 out/
-- 设备树文件在 arch/arm/boot/dts/
-- dock板的设备树：sun8i-v3s-licheepi-zero-dock.dtb
+- after compiling, zImage is in arch/arm/boot/ and the driver module is in out/
+- device tree files reside in arch/arm/boot/dts/
+- dock board device tree: sun8i-v3s-licheepi-zero-dock.dtb
 
-## Buildroot 根文件系统构建
+## Buildroot rootfs building
 
-### 获取 Buildroot
+### get Buildroot
 
 ```
 cd ~/v3s
@@ -532,7 +540,7 @@ tar xvf buildroot-2019.08.tar.gz && cd buildroot-2019.08/
 make menuconfig
 ```
 
-### 基本配置
+### basic configuration
 
 ```
 Target options  --->
@@ -544,7 +552,7 @@ Target options  --->
 	ARM instruction set (ARM)  ---> 
 ```
 
-### 编译链工具配置
+### toolchain configuration
 
 ```
 Toolchain  --->
@@ -563,7 +571,7 @@ Toolchain  --->
 	[*] Enable MMU support (NEW) 
 ```
 
-### alsa、sdl、fbv配置
+### alsa, sdl, fbv configuration
 
 ```
 Target packages  --->
@@ -601,78 +609,81 @@ Target packages  --->
 		[*]     install playsound tool
 		[*]   SDL_TTF
 ```
-### 编译
+### build
 
 ```
 make -j4
 ```
 
-生成的根文件系统在 output/images/rootfs.tar
+The generated root filesystem is in output/images/rootfs.tar.
 
-## TF 卡分区及烧录
+## SD card partitioning
 
-### TF 卡分区
+### partition the SD card
 
 ```
-sudo fdisk -l     		# 首先查看电脑上已插入的TF卡的设备号（一般为 /dev/sdb1,下面以/dev/sdb1为例）
-sudo umount /dev/sdb1 	# 若自动挂载了TF设备，请先卸载(有多个分区则全部卸载)
+sudo fdisk -l           # check the device number of the inserted SD card (usually /dev/sdb1, it is used as an example below)
+sudo umount /dev/sdb1   # if the SD card is automatically mounted, unmount it (all partitions if more than one)
 sudo umount /dev/sdb2
-sudo fdisk /dev/sdb   	# 进行分区操作
-##### 操作步骤如下 #####
-# 若已存分区即按 d 删除各个分区
-# 通过 n 新建分区，第一分区暂且申请为16M(f1c100s)、32M(v3s)，剩下的空间都给第二分区
-	# 第一分区操作：n p 1 2048 +32M
-		# p 主分区、默认 1 分区、默认2048、+32M
-	# 第二分区操作：n 后面全部回车默认即可
-		# p 主分区、默认 2 分区、默认、默认剩下的全部空间
-# p 查询分区表确定是否分区成功
-# w 保存写入并退出
+sudo fdisk /dev/sdb     # perform partition operations
+##### Partition operation steps #####
+# if there are any partitions, press 'd' to delete each of them
+# create a new partition using 'n', set the first partition as 16M (f1c100s) or 32M (v3s)
+# give the remaining space to the second partition
+    # first partition operation: n p 1 2048 +32M
+        # p primary partition, default 1 partition, default 2048, +32M
+    # second partition operation: n, press Enter after 'n' to set defaults
+        # p primary partition, default 2 partition, default, all remaining space by default
+# p query the partition table to determine whether the partition has been created successfully
+# w save the partition table and exit
 ########################
 
-sudo mkfs.ext4 /dev/sdb1 # 将第一分区格式化成EXT4
-sudo mkfs.ext4 /dev/sdb2 # 将第二分区格式化成EXT4
+sudo mkfs.ext4 /dev/sdb1    # format the first partition as ext4
+sudo mkfs.ext4 /dev/sdb2    # format the second partition as ext4
 
-# 格式说明
-	# EXT4：只用于Linux系统的内部磁盘
-	# NTFS：与Windows共用的磁盘
-	# FAT：所有系统和设备共用的磁盘
+# examples of possible file systems
+    # ext4: used mostly for Linux-only partitions
+    # NTFS: partitions shared with Windows
+    # FAT: partitions shared by all systems and devices
 ```
 
-后期为了能够在 windows 上方便添加 rom ，使用 gparted 划分三个分区，最后一个分区为 fat 类型
+Later, in order to be able to add ROMs conveniently on Windows, use gparted to create the third FAT partition.
 
-安装并启动
+Install and run gparted:
 
 ```
 sudo apt-get install gparted
 sudo gparted
 ```
 
-分区如下
+The partitions are as follows:
 
 ![](/images/4.jpg)
 
-### 烧录 uboot
+### burn U-Boot
 
 ```
 cd ~/v3s/u-boot/
 sudo dd if=u-boot-sunxi-with-spl.bin of=/dev/sdb bs=1024 seek=8
 ```
-### 写入内核和设备树
+### copy the kernel and the device tree
 
 ```
-sudo cp ~/v3s/linux/arch/arm/boot/zImage /挂载的tf卡第一个分区目录
-sudo cp ~/v3s/linux/arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dtb /挂载 tf 卡第一个分区目录
+# /dev/sdb1 - the first partition of the mounted SD card, it can be different on your system
+sudo cp ~/v3s/linux/arch/arm/boot/zImage /dev/sdb1
+sudo cp ~/v3s/linux/arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dtb /dev/sdb1
 ```
 
-### 写入根文件系统
+### untar rootfs
 
 ```
-sudo tar xvf ~/v3s/buildroot-2019.08/output/images/rootfs.tar -C /挂载 tf 卡第二个分区目录
+# /dev/sdb2 - the second partition of the mounted SD card, it can be different on your system
+sudo tar xvf ~/v3s/buildroot-2019.08/output/images/rootfs.tar -C /dev/sdb2
 ```
 
-## 编译模拟器
+## Emulator compilation
 
-### 编译 gpsp
+### compile gpSP
 
 ```
 cd ~/v3s
@@ -681,29 +692,27 @@ git clone https://github.com/hsinyuwang/gpsp.git
 cd gpsp/v3s
 make -j4
 ```
-### 复制可执行文件
+### copy the executable
 
-将生成的可执行文件复制到挂载的 tf 卡第二个分区目录，gpsp 同级目录下必须包含 gba_bios.bin 和 game_config.txt 文件
+Copy the generated executable to a folder on the second partition of the SD card. The folder needs contain gba_bios.bin and game_config.txt files in order to run the emulator properly, i.e. create the folder 'gpsp' under /root, copy gpsp, gba_bios.bin and game_config.txt into the folder.
 
-例如：
-- 在 /root 下创建 gpsp 文件夹，将 gpsp、gba_bios.bin、game_config.txt 复制到 gpsp 文件夹中
-- 在 /root 下创建 fceux 文件夹，将 fceux 复制到 fceux 文件夹中
+The same applies for other emulators, e.g. if you want to have fceux, create the folder 'fceux' under /root and copy the fceux executable to the folder.
 
-## 系统配置
+## System configuration
 
-插入 TF 卡，开机
+Insert the SD card and mount it.
 
-### 自动挂载 fat 分区
+### automount fat partition
 
 ```
 mkdir /root/roms
 vi /etc/fstab
 
-# 最后一行添加
+# add the last line
 /dev/mmcblk0p3  /root/roms      vfat    defaults        0       0
 ```
 
-### 配置双端显示
+### configure terminal display
 
 ```
 vi /etc/inittab
@@ -713,31 +722,31 @@ ttyS0::respawn:-/bin/sh
 tty0::respawn:-/bin/sh
 ```
 
-### 启动后开启声音
+### turn on the sound after startup
 
 ```
 vi /etc/init.d/S99runOnBoot
 
-# 添加
+# write the line below into the script mentioned above
 amixer -c 0 sset 'Headphone',0 60% unmute
 
-# 添加可执行权限
+# run in the shell - the line below adds executable permission for the script
 chmod +x /etc/init.d/S99runOnBoot
 ```
 
-### 配置 SDL 环境
+### configure SDL environment
 
 ```
 vi /etc/profile
 
-# SDL 配置
+# SDL configuration - it disables the cursor in the SDL window
 export SDL_NOMOUSE=1
 
-# 启动模拟器
+# start the emulator
 /root/startup.sh
 ```
 
-### 自启动模拟器
+### autostart the emulator
 
 ```
 vi /root/startup.sh
@@ -761,9 +770,9 @@ done
 chmod +x startup.sh
 ```
 
-## 制作镜像
+## Image mirroring
 
-### 创建工作目录
+### create a working directory
 
 ```
 mkdir ~/img
@@ -773,13 +782,13 @@ mkdir rootfs
 mkdir roms
 ```
 
-### 创建空白文件并分区
+### create a blank file and partition it
 
-分区表
+Partition table
 
-| 分区序号 | 起始地址 | 大小 | 内容 | 文件系统 |
+| Partition number | Start address | Size | Content | File system |
 | ---- | ---- | ---- | ---- | ---- |
-| 1 | 0 | 1M | u-boot-sunxi-with-spl.bin | 无 |
+| 1 | 0 | 1M | u-boot-sunxi-with-spl.bin | N/A |
 | 2 | 1 x 1024 x 1024 | 32M | zImage + sun8i-v3s-licheepi-zero-dock.dtb | ext4 |
 | 3 | 33 x 1024 x 1024 | 128M | rootfs | ext4 |
 | 4 | 161 x 1024 x 1024 | 剩余空间 | roms | fat |
@@ -792,22 +801,22 @@ sudo parted X-Boy_20221019.img mkpart primary ext4 67584s 329727s
 sudo parted X-Boy_20221019.img mkpart primary fat32 329728s 100%
 ```
 
-检查分区是否创建成功
+Check if the partitions have been created successfully.
 
 ```
 sudo parted X-Boy_20221019.img
 ```
 
-输入
+Type:
 
 ```
 print free
 
-# 退出
+# quit
 q
 ```
 
-### 将镜像文件虚拟成块设备
+### map the image into block devices
 
 ```
 sudo losetup -f --show X-Boy_20221019.img
@@ -815,17 +824,17 @@ sudo losetup -f --show X-Boy_20221019.img
 
 ![](/images/5.jpg)
 
-这里的 loop25 记录下来 ，以实际显示为准
+The loop device /dev/loop25 has been found and used by losetup here. On your computer it may be (and probably will be) a different loop device!
 
-挂载虚拟文件系统
+The partitions will be detected and mapped to your VFS (Virtual File System) after executing the following command:
 
 ```
 sudo kpartx -va /dev/loop25
 ```
 
-### 格式化块设备并且挂载
+### format the block devices and mount
 
-格式化分区
+Format the partitions:
 
 ```
 sudo mkfs.ext4 /dev/mapper/loop25p1
@@ -833,7 +842,7 @@ sudo mkfs.ext4 /dev/mapper/loop25p2
 sudo mkfs.vfat /dev/mapper/loop25p3
 ```
 
-挂载到之前创建的目录
+Mount them to the previously created folders:
 
 ```
 sudo mount /dev/mapper/loop25p1 ~/img/kernel/
@@ -841,46 +850,55 @@ sudo mount /dev/mapper/loop25p2 ~/img/rootfs/
 sudo mount /dev/mapper/loop25p3 ~/img/roms/
 ```
 
-### 烧录 uboot
+### burn U-Boot
 
 ```
 cd ~/v3s/u-boot/
 sudo dd if=u-boot-sunxi-with-spl.bin of=/dev/loop25 bs=512 seek=16
 ```
 
-### 写入内核和设备树
+### copy the kernel and the device tree
 
 ```
 sudo cp ~/v3s/linux/arch/arm/boot/zImage ~/img/kernel
 sudo cp ~/v3s/linux/arch/arm/boot/dts/sun8i-v3s-licheepi-zero-dock.dtb ~/img/kernel
 ```
 
-### 写入根文件系统
+### untar rootfs
 
 ```
 sudo tar xvf ~/v3s/buildroot-2019.08/output/images/rootfs.tar -C ~/img/rootfs
 ```
 
-## 感谢
+## Acknowledgements
 
 [steward-fu](https://github.com/steward-fu)
 
 [STM32-X360-xinput](https://github.com/nesvera/STM32-X360-xinput)
 
-## 参考链接
+## References
 
-[全志V3S（荔枝派zero）学习笔记](https://blog.csdn.net/p1279030826/article/details/114981681)
+[Allwinner V3s (Lichee Pi Zero) study notes](https://blog.csdn.net/p1279030826/article/details/114981681)
 
-[荔枝派Zero V3s开发板入坑记录](https://whycan.com/t_561.html)
+[Lichee Pi Zero (V3s development board) quick start guide](https://whycan.com/t_561.html)
 
-[Linux系统中使用Xbox360手柄](http://t.zoukankan.com/beyonne-p-10932152.html)
+[How to use a Xbox 360 gamepad in Linux](http://t.zoukankan.com/beyonne-p-10932152.html)
 
-[f1c100s spi fbtft ILI9341屏配置](https://blog.csdn.net/qulang000/article/details/114686525)
+[F1C100S SPI fbtft ILI9341 screen configuration](https://blog.csdn.net/qulang000/article/details/114686525)
 
-[点屏之SPI屏 ili9341](https://www.kancloud.cn/lichee/lpi0/538999)
+[ILI9341 SPI screen](https://www.kancloud.cn/lichee/lpi0/538999)
 
-[嵌入式Linux--荔枝派Zero--V3s--ST7789v](https://blog.csdn.net/qq_28877125/article/details/120007416)
+[Embedded Linux - Lichee Pi Zero - V3s - ST7789v](https://blog.csdn.net/qq_28877125/article/details/120007416)
 
-[v3S驱动音频](https://blog.csdn.net/lengyuefeng212/article/details/120055703)
+[V3s audio driver](https://blog.csdn.net/lengyuefeng212/article/details/120055703)
 
-[制作imx6ull Linux系统的img镜像](https://blog.csdn.net/mzy2364/article/details/113364250)
+[Making an image of imx6ull Linux system](https://blog.csdn.net/mzy2364/article/details/113364250)
+
+## Known bugs
+
+- LCD Backlight bug.
+
+## TODO
+
+- Use a mosfet as a main power switch.
+- Enlarge LCD1 connector's mounting pads (2) size, to ease hand soldering. Or redesign to e.g. XFCN-F0502-B-18-15T-R C2889974, FPC05018-09200 C496146.
